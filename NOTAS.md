@@ -151,3 +151,4 @@ after made the locustfile_client
 locust -f locustfile_client.py --master-host vacancies.cyrextech.net --master-port 7823 --headless
 
 locust --headless --users 10 --spawn-rate 1 -H <http://your-server.com>
+locust -f locust.py --host <https://localhost/homepage> --users 5 --spawn-rate 20
