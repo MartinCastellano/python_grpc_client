@@ -3,10 +3,10 @@
 import grpc
 import warnings
 
-import rpc_create_vacancy_pb2 as rpc__create__vacancy__pb2
-import rpc_update_vacancy_pb2 as rpc__update__vacancy__pb2
-import vacancy_pb2 as vacancy__pb2
-import vacancy_service_pb2 as vacancy__service__pb2
+import utils.rpc_create_vacancy_pb2 as rpc__create__vacancy__pb2
+import utils.rpc_update_vacancy_pb2 as rpc__update__vacancy__pb2
+import utils.vacancy_pb2 as vacancy__pb2
+import utils.vacancy_service_pb2 as vacancy__service__pb2
 
 GRPC_GENERATED_VERSION = '1.64.1'
 GRPC_VERSION = grpc.__version__

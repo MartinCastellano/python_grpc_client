@@ -12,9 +12,9 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
-import vacancy_pb2 as vacancy__pb2
-import rpc_create_vacancy_pb2 as rpc__create__vacancy__pb2
-import rpc_update_vacancy_pb2 as rpc__update__vacancy__pb2
+import utils.vacancy_pb2 as vacancy__pb2
+import utils.rpc_create_vacancy_pb2 as rpc__create__vacancy__pb2
+import utils.rpc_update_vacancy_pb2 as rpc__update__vacancy__pb2
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15vacancy_service.proto\x12\x02pb\x1a\rvacancy.proto\x1a\x18rpc_create_vacancy.proto\x1a\x18rpc_update_vacancy.proto\"O\n\x13GetVacanciesRequest\x12\x11\n\x04page\x18\x01 \x01(\x03H\x00\x88\x01\x01\x12\x12\n\x05limit\x18\x02 \x01(\x03H\x01\x88\x01\x01\x42\x07\n\x05_pageB\x08\n\x06_limit\"\x1c\n\x0eVacancyRequest\x12\n\n\x02Id\x18\x01 \x01(\t\"(\n\x15\x44\x65leteVacancyResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\xc9\x02\n\x0eVacancyService\x12@\n\rCreateVacancy\x12\x18.pb.CreateVacancyRequest\x1a\x13.pb.VacancyResponse\"\x00\x12\x37\n\nGetVacancy\x12\x12.pb.VacancyRequest\x1a\x13.pb.VacancyResponse\"\x00\x12\x38\n\x0cGetVacancies\x12\x17.pb.GetVacanciesRequest\x1a\x0b.pb.Vacancy\"\x00\x30\x01\x12@\n\rUpdateVacancy\x12\x18.pb.UpdateVacancyRequest\x1a\x13.pb.VacancyResponse\"\x00\x12@\n\rDeleteVacancy\x12\x12.pb.VacancyRequest\x1a\x19.pb.DeleteVacancyResponse\"\x00\x42\x14Z\x12\x63yrex/vacancies/pbb\x06proto3')

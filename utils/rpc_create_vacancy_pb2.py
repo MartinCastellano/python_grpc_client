@@ -12,7 +12,7 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
-import vacancy_pb2 as vacancy__pb2
+import utils.vacancy_pb2 as vacancy__pb2
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18rpc_create_vacancy.proto\x12\x02pb\x1a\rvacancy.proto\"s\n\x14\x43reateVacancyRequest\x12\r\n\x05Title\x18\x01 \x01(\t\x12\x13\n\x0b\x44\x65scription\x18\x02 \x01(\t\x12&\n\x08\x44ivision\x18\x03 \x01(\x0e\x32\x14.pb.Vacancy.DIVISION\x12\x0f\n\x07\x43ountry\x18\x04 \x01(\tB\x14Z\x12\x63yrex/vacancies/pbb\x06proto3')

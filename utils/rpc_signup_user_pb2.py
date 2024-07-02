@@ -12,7 +12,7 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
-import user_pb2 as user__pb2
+import utils.user_pb2 as user__pb2
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15rpc_signup_user.proto\x12\x02pb\x1a\nuser.proto\"Y\n\x0fSignUpUserInput\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05\x65mail\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x17\n\x0fpasswordConfirm\x18\x04 \x01(\t\",\n\x12SignUpUserResponse\x12\x16\n\x04user\x18\x01 \x01(\x0b\x32\x08.pb.UserB\x14Z\x12\x63yrex/vacancies/pbb\x06proto3')

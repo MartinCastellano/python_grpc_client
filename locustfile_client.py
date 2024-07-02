@@ -1,12 +1,15 @@
 # from __future__ import print_function
 
-import utils.auth_service_pb2_grpc
-import utils.rpc_create_vacancy_pb2
-import utils.rpc_signin_user_pb2
-import utils.rpc_update_vacancy_pb2
-import utils.vacancy_pb2
-import utils.vacancy_service_pb2_grpc
-import utils.vacancy_service_pb2
+
+
+import utils.auth_service_pb2_grpc as auth_service_pb2_grpc
+import utils.auth_service_pb2 as auth_service_pb2
+import utils.rpc_create_vacancy_pb2 as rpc_create_vacancy_pb2
+import utils.rpc_signin_user_pb2 as rpc_signin_user_pb2
+import utils.rpc_update_vacancy_pb2 as rpc_update_vacancy_pb2
+import utils.vacancy_pb2 as vacancy_pb2
+import utils.vacancy_service_pb2_grpc as vacancy_service_pb2_grpc
+import utils.vacancy_service_pb2 as vacancy_service_pb2
 
 import typing 
 import random
@@ -236,16 +239,16 @@ class UserLocustgRPC(User):
     # def hook_locust_quit(self,**kwargs):
     #     self.save_success_stats()
                          
-    # @events.request.add_listener
-    # def hook_request_success(self,request_type, name, response_time, response_length,**kwargs):
+    @events.request.add_listener
+    def hook_request_success(self,request_type, name, response_time, response_length):
         
-    #     self.request_success_stats.append([name, request_type, response_time, response_length])
+        self.request_success_stats.append([name, request_type, response_time, response_length])
     
     def on_start(self):
         
         if len(USER_CREDENTIALS) > 0:            
             user, passw = USER_CREDENTIALS.pop()
-            # print(user,passw)
+            print(user,passw)
             with grpc.insecure_channel("vacancies.cyrextech.net:7823") as self.channel:
                 # sign in
                 self.stub = auth_service_pb2_grpc.AuthServiceStub(self.channel)                       
@@ -260,6 +263,7 @@ class UserLocustgRPC(User):
                 self.stub = vacancy_service_pb2_grpc.VacancyServiceStub(channel)
                 start =  time.time() 
                 response = get_all_vacancies(self.stub) 
+                print("all vacancies")
                 # self.environment.events.request.fire(request_type="grpc", name="list all vacancies", response_time=time.time()-start, response_length=0)    
               
             gevent.sleep(1)  
@@ -274,9 +278,10 @@ class UserLocustgRPC(User):
                 
                 #create
                 start = time.time()
-                response = create_vacancy(self.stub)                 
+                response = create_vacancy(self.stub)
+                print("all vacancies")            
                 # locust.event.EventHook.measure
-                self.environment.events.request.fire(**request_meta)
+                # self.environment.events.request.fire(**request_meta)
                 self.environment.events.request.fire(request_type="grpc", name="create", response_time=time.time()-start, response_length=0)    
                 vacancy_id = response.vacancy.Id        
                 
@@ -284,17 +289,17 @@ class UserLocustgRPC(User):
                 start = time.time()
                 response = update_vacancy(self.stub,id=vacancy_id)                
                 self.environment.events.request.fire(request_type="grpc", name="update", response_time=time.time()-start, response_length=0)    
-
+                print("update")
                 #read 
                 start = time.time()
                 response = read_vacancy(self.stub,id=vacancy_id)                
                 self.environment.events.request.fire(request_type="grpc", name="read", response_time=time.time()-start, response_length=0)    
- 
+                print("read")
                 #delete
                 start = time.time()
                 response = delete_vacancy(self.stub,id=vacancy_id)
                 self.environment.events.request.fire(request_type="grpc", name="delete", response_time=time.time()-start, response_length=0)    
-
+                print("delete")
                               
             gevent.sleep(1)  
             iteration += 1
@@ -304,4 +309,3 @@ class UserLocustgRPC(User):
         gevent.spawn(self._on_task(timeout=30))        
         gevent.spawn(self._on_background(timeout=45)) 
     
-# user = UserLocustgRPC(environment)

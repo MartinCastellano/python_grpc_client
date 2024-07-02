@@ -3,10 +3,10 @@
 import grpc
 import warnings
 
-import auth_service_pb2 as auth__service__pb2
-import rpc_signin_user_pb2 as rpc__signin__user__pb2
-import rpc_signup_user_pb2 as rpc__signup__user__pb2
-import user_pb2 as user__pb2
+import utils.auth_service_pb2 as auth__service__pb2
+import utils.rpc_signin_user_pb2 as rpc__signin__user__pb2
+import utils.rpc_signup_user_pb2 as rpc__signup__user__pb2
+import utils.user_pb2 as user__pb2
 
 GRPC_GENERATED_VERSION = '1.64.1'
 GRPC_VERSION = grpc.__version__

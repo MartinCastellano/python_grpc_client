@@ -1,22 +1,17 @@
-import utils.auth_service_pb2_grpc
-import utils.rpc_create_vacancy_pb2
-import utils.rpc_signin_user_pb2
-import utils.rpc_update_vacancy_pb2
-import utils.vacancy_pb2
-import utils.vacancy_service_pb2_grpc
-import utils.vacancy_service_pb2
+import utils.auth_service_pb2_grpc as auth_service_pb2_grpc
+import utils.rpc_create_vacancy_pb2 as rpc_create_vacancy_pb2
+import utils.rpc_signin_user_pb2 as rpc_signin_user_pb2
+import utils.rpc_update_vacancy_pb2 as rpc_update_vacancy_pb2
+import utils.vacancy_pb2 as vacancy_pb2
+import utils.vacancy_service_pb2_grpc as vacancy_service_pb2_grpc
+import utils.vacancy_service_pb2 as vacancy_service_pb2
 
 from dotenv import load_dotenv
 
 from locust.exception import LocustError
-from locust import  TaskSet, between, task, constant, events, User, runners, constant_pacing
+from locust import   task,  events, User,  constant_pacing
 from locust.user.task import (
-    LOCUST_STATE_RUNNING,
-    LOCUST_STATE_STOPPING,
-    LOCUST_STATE_WAITING,
-    DefaultTaskSet,
-    TaskSet,
-    get_tasks_from_base_classes,
+    LOCUST_STATE_STOPPING,   
 )
 
 import typing 
@@ -26,23 +21,23 @@ import logging
 
 import gevent
 import time
-
+import json
 
 import grpc
 from grpc import _channel
 # patch grpc so that it uses gevent instead of asyncio
 import grpc.experimental.gevent as grpc_gevent
 
-from grpc_interceptor import ClientInterceptor
+
 
 grpc_gevent.init_gevent()
-from concurrent import futures
+
 
 # import asyncio
 import os
 import time
 
-from typing import Any, Callable
+
 
 load_dotenv()
 
@@ -149,21 +144,6 @@ def delete_vacancy(stub,id)-> vacancy_service_pb2.DeleteVacancyResponse:
 
 def get_all_vacancies(stub) -> typing.List[grpc._channel._MultiThreadedRendezvous]:
      
-    # vacancy_list = []
-    # for p in range(0, 43):        
-    #     request = vacancy_service_pb2.GetVacanciesRequest(page=p, limit=200) 
-    #     try:                
-    #         response = stub.GetVacancies(request, timeout=5)
-    #         for vacancy in response:
-    #             vacancy_list.append(vacancy) 
-              
-    #         return vacancy_list       
-    #     except grpc.RpcError as rpc_error:
-    #         _LOGGER.error("Error obtaining all vacancies: %s (Request: %s)", rpc_error)
-    #         return rpc_error
-    #     else:
-    #         _LOGGER.info("Vacancy obtained all vacancies successfully. Response: %s", response)
-    #         return response  
     
     try:    
         vacancy_list = [        
@@ -205,8 +185,9 @@ class GrpcClient:
                 "response": None,
             }
             try:
+                
                 request_meta["response"] = func(*args, **kwargs)
-                request_meta["response_length"] = len(request_meta["response"].message)
+                request_meta["response_length"] = 0
             except grpc.RpcError as e:
                 request_meta["exception"] = e
             request_meta["response_time"] = (time.perf_counter() - start_time) * 1000
@@ -215,44 +196,14 @@ class GrpcClient:
 
         return wrapper
     
-class LocustInterceptor(ClientInterceptor):
-    def __init__(self, environment, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
-        self.env = environment
-
-    def intercept(
-        self,
-        method: Callable,
-        request_or_iterator: Any,
-        call_details: grpc.ClientCallDetails,
-    ):
-        response = None
-        exception = None
-        start_perf_counter = time.perf_counter()
-        response_length = 0
-        try:
-            response = method(request_or_iterator, call_details)
-            response_length = response.result().ByteSize()
-        except grpc.RpcError as e:
-            exception = e
-
-        self.env.events.request.fire(
-            request_type="grpc",
-            name=call_details.method,
-            response_time=(time.perf_counter() - start_perf_counter) * 1000,
-            response_length=response_length,
-            response=response,
-            context=None,
-            exception=exception,
-        )
-        return response
 
 class GrpcUser(User):
     abstract = True
 
     stub_class = None
-
+    
+    
     def __init__(self, environment):
         super().__init__(environment)
         for attr_value, attr_name in ((self.host, "host"), (self.stub_class, "stub_class")):
@@ -262,42 +213,7 @@ class GrpcUser(User):
         self._channel_closed = False
         stub = self.stub_class(self._channel)
         self.client = GrpcClient(stub)
-        
-        self.request_fail_stats = [list()]
-        self.request_success_stats = [list()]
-        
-    # @events.init_command_line_parser.add_listener
-    # def init_parser(parser):
-    #     parser.add_argument("--customarg", type=str, env_var="LOCUST_MY_ARGUMENT", default="1234", help="It's working")
-
-    # @events.init.add_listener
-    # def _(environment, **kw):
-    #     print("Custom argument supplied: %s" % environment.parsed_options.customarg)
-    
-    # @events.request.add_listener
-    # def hook_request_fail(self,request_type, name, response_time, exception,**kwargs):
-    #     if exception:
-    #         print(f"{exception}")
-    #     else:
-    #         self.request_fail_stats.append([name, request_type, response_time, exception])
-    
-    @events.request.add_listener
-    def save_success_stats(self,**kwargs):
-        import csv
-        with open('success_req_stats.csv', 'wb') as csv_file:
-            writer = csv.writer(csv_file)
-            for value in self.request_success_stats:
-                writer.writerow(value)
-                    
-    @events.quitting.add_listener
-    def hook_locust_quit(self,**kwargs):
-        self.save_success_stats()
-                         
-    # @events.request.add_listener
-    # def hook_request_success(self,request_type, name, response_time, response_length,**kwargs):
-        
-    #     self.request_success_stats.append([name, request_type, response_time, response_length])
-        
+   
     def stop(self, force=False):
         self._channel_closed = True
         time.sleep(1)
@@ -309,33 +225,23 @@ class TaskGrpcUser(GrpcUser):
     host = "vacancies.cyrextech.net:7823"
     stub_class = auth_service_pb2_grpc.AuthServiceStub
     wait_time = constant_pacing(30)
-    
+    request_fail_stats = [list()]
+    request_success_stats = [list()]
     def on_start(self):
         
         if len(USER_CREDENTIALS) > 0:            
             user, passw = USER_CREDENTIALS.pop()
-            print(user,passw)
+            # print(user,passw)
             with grpc.insecure_channel("vacancies.cyrextech.net:7823") as self.channel:
                 # sign in
                 self.stub = auth_service_pb2_grpc.AuthServiceStub(self.channel)                       
                 sign_in_user(self.stub,email=user,password=passw)
             
             
-    def _on_background(self,timeout):
-        iteration = 0                    
-        while self.environment.runner.state != LOCUST_STATE_STOPPING:
-            if iteration % timeout == 0:
-                channel = grpc.insecure_channel("vacancies.cyrextech.net:7823")
-                self.stub = vacancy_service_pb2_grpc.VacancyServiceStub(channel)
-                start =  time.time() 
-                response = get_all_vacancies(self.stub) 
-                print("all vacancies")
-                # self.environment.events.request.fire(request_type="grpc", name="list all vacancies", response_time=time.time()-start, response_length=0)    
-              
-            gevent.sleep(1)  
-            iteration += 1
+    
     
     def _on_task(self,timeout):
+        self.environment.events.request.measure(name="gRPC_measure", request_type="grpc")
         iteration = 0                    
         while self.environment.runner.state != LOCUST_STATE_STOPPING:
             if iteration % timeout == 0:
@@ -345,39 +251,72 @@ class TaskGrpcUser(GrpcUser):
                 #create
                 start = time.time()
                 response = create_vacancy(self.stub)
-                print("create")               
-                # locust.event.EventHook.measure
-                # self.environment.events.request.fire(**request_meta)
-                # self.environment.events.request.fire(request_type="grpc", name="create", response_time=time.time()-start, response_length=0)    
+                # print("create")        
+                
+                self.environment.events.request.fire(request_type="grpc", name="create", response_time=time.time()-start, response_length=0)    
                 vacancy_id = response.vacancy.Id        
                 
                 #update
                 start = time.time()
                 response = update_vacancy(self.stub,id=vacancy_id)                
-                # self.environment.events.request.fire(request_type="grpc", name="update", response_time=time.time()-start, response_length=0)    
-                print("update")   
+                self.environment.events.request.fire(request_type="grpc", name="update", response_time=time.time()-start, response_length=0)    
+                # print("update")   
                 #read 
                 start = time.time()
                 response = read_vacancy(self.stub,id=vacancy_id)                
-                # self.environment.events.request.fire(request_type="grpc", name="read", response_time=time.time()-start, response_length=0)    
-                print("read") 
+                self.environment.events.request.fire(request_type="grpc", name="read", response_time=time.time()-start, response_length=0)    
+                # print("read") 
                 #delete
                 start = time.time()
                 response = delete_vacancy(self.stub,id=vacancy_id)
-                # self.environment.events.request.fire(request_type="grpc", name="delete", response_time=time.time()-start, response_length=0)    
-                print("delete") 
-            
+                self.environment.events.request.fire(request_type="grpc", name="delete", response_time=time.time()-start, response_length=0)    
+                # print("delete") 
+            if iteration % (timeout+15) == 0:
+                start =  time.time() 
+                response = get_all_vacancies(self.stub)
+                self.environment.events.request.fire(request_type="grpc", name="get all vacanciese", response_time=time.time()-start, response_length=0)    
+
+                # print("all vacancies")
             gevent.sleep(1)  
             iteration += 1
     
     @task
-    def locust_tasks(self):
-        if not self._channel_closed:
+    def locust_tasks(self):       
+        
+        if not self._channel_closed:            
             gevent.spawn(self._on_task(timeout=30))        
-        gevent.spawn(self._on_background(timeout=45)) 
     
-    # @task
-    # def sayHello(self):
-    #     if not self._channel_closed:
-    #         self.client.SayHello(hello_pb2.HelloRequest(name="Test"))
-    #     time.sleep(1)
+    
+    # @events.request.add_listener
+    # def request_success(self, request_type, name, response_time, response_length, **_kwargs):
+    #     users = self.env.runner.user_count
+    #     self._log_request(request_type, name, response_time, response_length, users, True, None)
+    
+    # def _log_request(self, request_type, name, response_time, response_length, users, success, exception):
+    #     stat_file.write(request_type + "," + name + "," + str(response_time) + "," + str(users) + "\n")
+    
+    # @events.request.add_listener
+    # def save_success_stats(self,**kwargs):
+    #     import csv
+    #     with open('success_req_stats.csv', 'wb' ,newline='') as csv_file:
+    #         writer = csv.writer(csv_file)
+    #         for value in self.request_success_stats:
+    #             writer.writerow(value)
+                
+    # @events.quitting.add_listener
+    # def hook_locust_quit(self,**kwargs):
+    #     self.save_success_stats()     
+    
+    @events.request.add_listener
+    def hook_request_success(request_type, name, response_length, response_time ,**kwargs):
+        _LOGGER.info(f"gRPC Request Succeeded: {name} ({request_type}) - Response Time: {response_time:.2f}s, Length: {response_length} bytes")
+        TaskGrpcUser.request_success_stats.append([name, request_type, response_time, response_length])
+
+    
+    # @events.request.add_listener
+    # def hook_request_fail(request_type, name, response_time, response_length, exception, **kwargs):        
+    #     _LOGGER.error(f"gRPC Request Failed: {name} ({request_type})")
+    #     if exception:
+    #         _LOGGER.exception(exception)  
+    #     else:
+    #         TaskGrpcUser.request_fail_stats.append([name, request_type, response_time, response_length, exception])
