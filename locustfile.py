@@ -211,15 +211,19 @@ class GrpcUser(User):
         
 @events.request.add_listener
 def hook_request_success(request_type, name, response_length, response_time ,exception,*args):
-    _LOGGER.info(f"gRPC Request Succeeded: {name} ({request_type}) - Response Time: {response_time:.2f}s, Length: {response_length} bytes")
-    TaskGrpcUser.request_success_stats.append([name, request_type, response_time, response_length])
+    if exception:
+        _LOGGER.exception(f"gRPC exception: {name} {exception} ({request_type})") 
+    
+    else:    
+        _LOGGER.info(f"gRPC Request Succeeded: {name} ({request_type}) - Response Time: {response_time:.2f}s, Length: {response_length} bytes")
+        TaskGrpcUser.request_success_stats.append([name, request_type, response_time, response_length])
 
 @events.request.add_listener
 def hook_request_fail(request_type, name, response_time, response_length, exception,*args):        
     _LOGGER.error(f"gRPC Request Failed: {name} ({request_type})")
         
     if exception:
-        _LOGGER.exception(exception)  
+        _LOGGER.exception(f"gRPC exception: {name} {exception} ({request_type})")  
     else:
         TaskGrpcUser.request_fail_stats.append([name, request_type, response_time, response_length, exception])
 
