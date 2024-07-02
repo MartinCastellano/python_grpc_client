@@ -22,15 +22,20 @@ services:
 
   master:
     image: locustio/locust
+    container_name: locust_master
     ports:
      - "8089:8089"
     volumes:
       - ./:/mnt/locust
-    command: -f /mnt/locust/locustfile.py --master -H http://master:8089
+    command: -f /mnt/locust/locustfile_client.py --master -H http://master:8089
   
   worker:
-    image: locustio/locust
+    image: my_locust
+    build:
+      context: .
+      dockerfile: locust.dockerfile    
+    container_name: locust_client
     volumes:
       - ./:/mnt/locust
-    command: -f /mnt/locust/locustfile.py --worker --master-host master
+    command: -f /mnt/locust/locustfile_client.py  --master-host master
       
