@@ -13,7 +13,7 @@ from locust import   task,  events, User,  constant_pacing
 from locust.user.task import (
     LOCUST_STATE_STOPPING,   
 )
-
+import traceback
 import typing 
 import random
 import string
@@ -233,12 +233,12 @@ class TaskGrpcUser(GrpcUser):
     def on_start(self):
         
         if len(USER_CREDENTIALS) > 0:            
-            user, passw = USER_CREDENTIALS.pop()
+            self.user, self.passw = USER_CREDENTIALS.pop()
             # print(user,passw)
             with grpc.insecure_channel("vacancies.cyrextech.net:7823") as self.channel:
                 # sign in
                 self.stub = auth_service_pb2_grpc.AuthServiceStub(self.channel)                       
-                sign_in_user(self.stub,email=user,password=passw)
+                sign_in_user(self.stub,email=self.user,password=self.passw)
             
             
     
@@ -248,6 +248,7 @@ class TaskGrpcUser(GrpcUser):
         iteration = 0                    
         while self.environment.runner.state != LOCUST_STATE_STOPPING:
             try: 
+                       
 
                 if iteration % timeout == 0:
                     self.channel = grpc.insecure_channel("vacancies.cyrextech.net:7823")
@@ -281,7 +282,8 @@ class TaskGrpcUser(GrpcUser):
                     response = get_all_vacancies(self.stub)
                     self.environment.events.request.fire(request_type="grpc", name="get all vacanciese", response_time=time.time()-start, response_length=len(str(response))*8,exception=None)    
             except grpc.RpcError as rpc_error:
-                _LOGGER.error("gRPG error on request: %s (Request: %s)", rpc_error)                
+                # tb = traceback.format_exc()
+                _LOGGER.error("gRPG error on request: %s (Request: %s)", rpc_error)
                 return rpc_error   
                 
                 # print("all vacancies")
