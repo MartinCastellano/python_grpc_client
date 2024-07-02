@@ -1,8 +1,0 @@
-FROM locustio/locust
-
-
-
-
-
-
-
